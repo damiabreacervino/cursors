@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.IO Pinturillo</title>
+    <style>
+        body {
+            margin: 0;
+            padding-bottom: 3rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #form {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.25rem;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            height: 3rem;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+        }
+
+        #input {
+            border: none;
+            padding: 0 1rem;
+            flex-grow: 1;
+            border-radius: 2rem;
+            margin: 0.25rem;
+        }
+
+        #input:focus {
+            outline: none;
+        }
+
+        #form>button {
+            background: #333;
+            border: none;
+            padding: 0 1rem;
+            margin: 0.25rem;
+            border-radius: 3px;
+            outline: none;
+            color: #fff;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages>li {
+            padding: 0.5rem 1rem;
+        }
+
+        #messages>li:nth-child(odd) {
+            background: #efefef;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <canvas id="canvas" width="900px" height="900px"></canvas>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        var user = prompt('Please enter your username');
+        var socket = io();
+
+        var canvas = document.getElementById('canvas');
+        var context = canvas.getContext("2d");
+        var color = Math.floor(Math.random() * 16777215).toString(16);
+        var cursors = [];
+
+        canvas.addEventListener("mousemove", (e) => {
+            let x = e.clientX;
+            let y = e.clientY;
+            let coor = "User " + user + " -> Coordinates: (" + x + "," + y + ")";
+            console.log(coor);
+            socket.emit('coordinates', { coordinateX: x, coordinateY: y, color: color, username: user });
+        });
+
+        socket.on('coordinates', function (coord) {
+            cursors[coord.id] = coord;
+            context.fillStyle = "white";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+
+            renderCursors(cursors);
+        });
+
+        function renderCursors(cursors) {
+            for (let i = 0; i < cursors.length; i++) {
+                if (cursors[i] != undefined) {
+                    context.beginPath();
+                    context.fillStyle = "#" + cursors[i].color;
+                    context.ellipse(cursors[i].coordinateX, cursors[i].coordinateY, 10, 10, 0, 0, Math.PI * 2);
+                    context.fill();
+                    context.closePath();
+
+                    context.fillRect(cursors[i].coordinateX, cursors[i].coordinateY, -10, -10);
+                    context.fillStyle = "white";
+                    context.strokeRect(cursors[i].coordinateX - 2, cursors[i].coordinateY - 11, 50, -15);
+
+                    context.beginPath();
+                    context.fillStyle = "black";
+                    texto = cursors[i].username;
+                    context.fillText(texto, cursors[i].coordinateX, cursors[i].coordinateY - 15);
+                    context.closePath();
+                }
+            }
+
+        }
+
+    </script>
+
+</body>
+
+</html>
